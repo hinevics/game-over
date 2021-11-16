@@ -1,10 +1,17 @@
 import os
 import datetime
-# import re
+import re
 # import random
 
 from config import PATH_PLAYERS, PATH_TEMP_NEW_USER, RATING, PATH_TEMP_START_STATUS, LIVES, PATH_PRINT_GAME_OVER
 # LIVES, RATING, PATH_DB, PATH_PRINT_GAME_OVER,
+
+
+def creating_record_database(rating: int, time: str) -> str:
+    with open(file=PATH_TEMP_NEW_USER, encoding='utf-8') as file:
+        data = file.read()
+        data = data.format(RATING=rating, TIME=time)
+        return data
 
 
 def game_over():
@@ -13,46 +20,67 @@ def game_over():
         print(_game_over)
 
 
-def status(name: str, rating: str, time: str, lives: str):
+def status(user_data: dict):
     with open(file=PATH_TEMP_START_STATUS, mode='r', encoding='utf-8') as file:
-        _status = file.read(name=name, rating=rating, time=time, lives=lives)
+        _status = file.read(name=user_data['name'],
+                            rating=user_data['rating'], time=user_data['time'], lives=user_data['lives'])
         print(_status)
 
 
-def parser_data_user(user):
-    # a = re.
-    pass
+def parser_data_user(name: str) -> tuple:
+    user_path = r"{path}\{user_name}".format(path=PATH_PLAYERS, user_name=name)
+    with open(file=user_path, encoding='utf-8') as file:
+        user_data = file.read()
+    re_match = re.match(pattern=r'RATING:(?P<rating>\d+)\nTIME:(?P<time>.+)', string=user_data)
+    rating = int(re_match.group('rating'))
+    time = re_match.group('time')
+    return rating, time, user_path
 
 
 def new_user(name: str) -> tuple:
-    PATH_NEW_USER = r"{path}\{user_name}".format(path=PATH_PLAYERS, user_name=name)
+    user_path = r"{path}\{user_name}".format(path=PATH_PLAYERS, user_name=name)
     time_now = datetime.datetime.now()
-    with open(file=PATH_TEMP_NEW_USER, mode='r', encoding='utf-8') as file:
-        new_user = file.read()
-        new_user = new_user.format(RATING=RATING, TIME=time_now)
-        print(new_user)
-    with open(file=PATH_NEW_USER, mode='a', encoding='utf-8') as new_user_file:
+    _new_user = creating_record_database(rating=RATING, time=time_now)
+    print(_new_user)
+    with open(file=user_path, mode='a', encoding='utf-8') as new_user_file:
         new_user_file.write(new_user)
-    return RATING, time_now
+    return RATING, time_now, user_path
 
 
 def task_creation():
     pass
 
 
-def start():
+def start() -> dict:
     name = input('name:')
     list_users = os.listdir(path=PATH_PLAYERS)
     if name in list_users:
-        rating, time = parser_data_user()
+        rating, time, user_path = parser_data_user(name=name)
     else:
         rating, time = new_user(name=name)
-    status(name=name, rating=rating, time=time, lives=LIVES)
+    return dict(name=name, rating=rating, lives=LIVES, time=time, user_path=user_path)
+
+
+def exit(user_data: dict):
+    print_exit = r'The user {name} quits the game. Your {rating} rating is saved.'.format(
+        rating=user_data['rating'], name=user_data['name'])
+    with open(file=user_data['user_path'], mode='w', encoding='utf-8') as file:
+        user_data = creating_record_database(rating=user_data['rating'], time=user_data['time'])
+        file.write(user_data)
+    print(print_exit)
 
 
 def main():
-    start()
-    task_creation()
+    user_data = start()
+    while True:
+        status(user_data=user_data)
+        print('1. next\n2. exit\n(write 1 or 2)')
+        answer = input('enter answer: ')
+        if answer == '2':
+            exit()
+            break
+        elif answer == '1':
+            task_creation()
 
 
 if __name__ == "__main__":
