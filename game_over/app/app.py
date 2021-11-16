@@ -1,7 +1,7 @@
 import os
 import datetime
 import re
-# import random
+import random
 
 from config import PATH_PLAYERS, PATH_TEMP_NEW_USER, RATING, PATH_TEMP_START_STATUS, LIVES, PATH_PRINT_GAME_OVER
 # LIVES, RATING, PATH_DB, PATH_PRINT_GAME_OVER,
@@ -47,8 +47,11 @@ def new_user(name: str) -> tuple:
     return RATING, time_now, user_path
 
 
-def task_creation():
-    pass
+def task_creation() -> tuple:
+    a = random.randint(a=0, b=10000000)
+    b = random.randint(a=0, b=10000000)
+    true_c = a + b
+    return a, b, true_c
 
 
 def start() -> dict:
@@ -70,8 +73,13 @@ def exit(user_data: dict):
     print(print_exit)
 
 
+def rating_function(lives, a, b):
+    pass
+
+
 def main():
     user_data = start()
+    game_status = True  # нужно рпередять проигрыш или продолжаем! 
     while True:
         status(user_data=user_data)
         print('1. next\n2. exit\n(write 1 or 2)')
@@ -80,8 +88,24 @@ def main():
             exit()
             break
         elif answer == '1':
-            task_creation()
+            a, b, true_c = task_creation()
+            attempt = 3
+            while True:
+                user_c = input('{a} + {b} = '.format(a=a, b=b))
+                if user_c.isdigit():
+                    break
+                else:
+                    attempt -= 1
+                    print('please enter the number. lives:{lives}'.format(lives=user_data['lives']))
+                    if attempt == 0:
+                        user_data['lives'] -= 1
+                        print('Enter the number, you lose lives. lives:{}'.format(user_data['lives']))
+            if true_c == user_c:
+                user_data['rating'] += rating_function(lives=user_data['lives'], a=a, b=b)
+            else:
+                user_data['lives'] -= 1
 
+# 
 
 if __name__ == "__main__":
     main()
